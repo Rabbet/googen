@@ -26,17 +26,19 @@ defmodule <%= root %>.Request do
   end
 
   @doc false
-  # Media upload: builds a raw (`uploadType=media`) or `multipart/related`
-  # (`uploadType=multipart`) body and posts it to the upload endpoint.
+  # Media upload. `data` may be iodata (held in memory) or a `File.Stream`
+  # (e.g. `File.stream!(path)`), which is streamed from disk with a computed
+  # content-length. `uploadType=media` sends the bytes raw; `uploadType=multipart`
+  # wraps JSON metadata and the bytes in a multipart/related body.
   def upload(spec) do
     {call, params} = Keyword.split(spec[:opts] || [], @reserved)
     {query, _body} = route_params(params, spec[:params] || %{}, spec[:query] || [])
     query = [{"uploadType", spec[:upload_type]} | query]
     url = @base_url |> URI.merge(fill(spec[:url], spec[:path_params] || %{})) |> URI.to_string()
-    {body, content_type} = build_upload(spec, call)
+    {body, content_type, size} = build_upload(spec, call)
 
     [method: spec[:method], url: url, params: query, body: body]
-    |> Keyword.put(:headers, [{"content-type", content_type}])
+    |> Keyword.put(:headers, [{"content-type", content_type} | content_length(size)])
     |> put(:auth, call[:token] && {:bearer, call[:token]})
     |> Keyword.merge(call[:req] || [])
     |> Req.request()
@@ -55,30 +57,38 @@ defmodule <%= root %>.Request do
     end)
   end
 
-  # A raw media body, or a multipart/related body pairing JSON metadata with the
-  # content. Returns `{body, content_type}`.
+  # Returns `{body, content_type, size}`. `size` is nil when it can't be
+  # determined (e.g. an arbitrary stream), in which case content-length is omitted.
   defp build_upload(spec, call) do
+    {data, size} = payload(spec[:data])
+
     case spec[:upload_type] do
-      "media" -> {spec[:data], content_type(spec, call)}
-      "multipart" -> multipart_body(spec, call)
+      "media" -> {data, content_type(spec, call), size}
+      "multipart" -> multipart(spec, call, data, size)
     end
   end
 
-  defp multipart_body(spec, call) do
+  defp multipart(spec, call, data, data_size) do
     boundary = "googen" <> Base.url_encode64(:crypto.strong_rand_bytes(12), padding: false)
 
-    body = [
+    preamble = [
       "--", boundary, "\r\n",
       "Content-Type: application/json; charset=UTF-8\r\n\r\n",
       Jason.encode!(spec[:metadata]), "\r\n",
       "--", boundary, "\r\n",
-      "Content-Type: ", content_type(spec, call), "\r\n\r\n",
-      spec[:data], "\r\n",
-      "--", boundary, "--"
+      "Content-Type: ", content_type(spec, call), "\r\n\r\n"
     ]
 
-    {body, "multipart/related; boundary=#{boundary}"}
+    closing = ["\r\n--", boundary, "--"]
+    body = Stream.concat([preamble, data, closing])
+    size = data_size && IO.iodata_length(preamble) + data_size + IO.iodata_length(closing)
+    {body, "multipart/related; boundary=#{boundary}", size}
   end
+
+  # Normalises `data` into `{enumerable, byte_size | nil}`. A File.Stream is left
+  # lazy and its size read from the filesystem; iodata is wrapped and measured.
+  defp payload(%File.Stream{path: path} = stream), do: {stream, File.stat!(path).size}
+  defp payload(data), do: {[data], IO.iodata_length(data)}
 
   # Content type of the uploaded bytes: an explicit `:content_type` opt, else the
   # metadata's `content_type`, else octet-stream.
@@ -86,6 +96,9 @@ defmodule <%= root %>.Request do
     call[:content_type] || (is_map(spec[:metadata]) && Map.get(spec[:metadata], :content_type)) ||
       "application/octet-stream"
   end
+
+  defp content_length(nil), do: []
+  defp content_length(size), do: [{"content-length", Integer.to_string(size)}]
 
   # `alt=media` downloads return raw bytes, so decoding is disabled automatically.
   defp decode_flag(call, query) do
