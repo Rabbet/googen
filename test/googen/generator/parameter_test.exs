@@ -22,7 +22,9 @@ defmodule Googen.Generator.ParameterTest do
 
     test "appends a body param when the method has a request" do
       method = %{path: "widgets", parameters: nil, request: %{"$ref": "Widget"}}
-      assert {[], [%Parameter{name: "body", location: "body"}]} = Parameter.from_method(method, ctx())
+
+      assert {[], [%Parameter{name: "body", location: "body"}]} =
+               Parameter.from_method(method, ctx())
     end
 
     test "camelCase params become snake_case variables with the wire name preserved" do

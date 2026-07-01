@@ -109,10 +109,13 @@ defmodule Googen.GeneratorTest do
 
   test "error responses come back as the client's Error struct" do
     adapter = fn request ->
-      {request, %Req.Response{status: 404, body: %{"error" => %{"code" => 404, "message" => "nope"}}}}
+      {request,
+       %Req.Response{status: 404, body: %{"error" => %{"code" => 404, "message" => "nope"}}}}
     end
 
-    assert {:error, error} = Gcp.Widget.Widgets.get("missing", token: "tok", req: [adapter: adapter])
+    assert {:error, error} =
+             Gcp.Widget.Widgets.get("missing", token: "tok", req: [adapter: adapter])
+
     assert error.__struct__ == Gcp.Widget.Error
     assert error.status == 404
     assert error.code == 404

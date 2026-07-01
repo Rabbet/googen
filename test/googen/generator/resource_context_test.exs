@@ -9,7 +9,11 @@ defmodule Googen.Generator.ResourceContextTest do
   end
 
   test "with_property builds a camelCase-accumulating prefix used to name inline objects" do
-    context = ns() |> ResourceContext.with_property("bucket") |> ResourceContext.with_property("objectRetention")
+    context =
+      ns()
+      |> ResourceContext.with_property("bucket")
+      |> ResourceContext.with_property("objectRetention")
+
     assert ResourceContext.name(context, "policy") == "BucketObjectRetentionPolicy"
     # the anonymous-object struct name uses that prefix
     assert ResourceContext.struct_name(context) == "Gcp.Widget.Model.BucketObjectRetention"

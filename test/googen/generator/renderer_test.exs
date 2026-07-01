@@ -33,17 +33,27 @@ defmodule Googen.Generator.RendererTest do
   describe "decode_rhs/1" do
     test "each decode strategy renders its call" do
       assert Renderer.decode_rhs(decodable("name", :raw)) == ~s|m["name"]|
-      assert Renderer.decode_rhs(decodable("createdAt", :datetime)) == ~s|Decode.datetime(m["createdAt"])|
+
+      assert Renderer.decode_rhs(decodable("createdAt", :datetime)) ==
+               ~s|Decode.datetime(m["createdAt"])|
+
       assert Renderer.decode_rhs(decodable("day", :date)) == ~s|Decode.date(m["day"])|
-      assert Renderer.decode_rhs(decodable("owner", {:struct, "M.Owner"})) == ~s|M.Owner.decode(m["owner"])|
-      assert Renderer.decode_rhs(decodable("ts", {:list, :datetime})) == ~s|Decode.list(m["ts"], DateTime)|
-      assert Renderer.decode_rhs(decodable("m", {:map, "M.Owner"})) == ~s|Decode.map(m["m"], M.Owner)|
+
+      assert Renderer.decode_rhs(decodable("owner", {:struct, "M.Owner"})) ==
+               ~s|M.Owner.decode(m["owner"])|
+
+      assert Renderer.decode_rhs(decodable("ts", {:list, :datetime})) ==
+               ~s|Decode.list(m["ts"], DateTime)|
+
+      assert Renderer.decode_rhs(decodable("m", {:map, "M.Owner"})) ==
+               ~s|Decode.map(m["m"], M.Owner)|
     end
   end
 
   describe "endpoint helpers" do
     test "signature_args yields positional args with a trailing comma, empty when none" do
       assert Renderer.signature_args(%{required_parameters: []}) == ""
+
       assert Renderer.signature_args(%{required_parameters: [var("bucket"), var("object")]}) ==
                "bucket, object, "
     end
