@@ -105,7 +105,7 @@ defmodule Googen.Generator.Endpoint do
       wire: "data",
       variable_name: "data",
       description:
-        "Content to upload: iodata, or a `File.Stream` (e.g. `File.stream!(path)`) to stream from disk.",
+        "Content to upload: iodata, or a `File.Stream` (e.g. `File.stream!(path)`) to stream it from disk with a computed content-length.",
       type: %Type{name: "iodata", typespec: "iodata() | File.Stream.t()", decode: :raw},
       location: "media"
     }

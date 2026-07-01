@@ -57,8 +57,9 @@ defmodule <%= root %>.Request do
     end)
   end
 
-  # Returns `{body, content_type, size}`. `size` is nil when it can't be
-  # determined (e.g. an arbitrary stream), in which case content-length is omitted.
+  # Returns `{body, content_type, byte_size}`. Google's simple/multipart uploads
+  # require a content-length (a body without one is rejected with 411), so `data`
+  # must be iodata or a File.Stream — both of known size.
   defp build_upload(spec, call) do
     {data, size} = payload(spec[:data])
 
@@ -81,14 +82,22 @@ defmodule <%= root %>.Request do
 
     closing = ["\r\n--", boundary, "--"]
     body = Stream.concat([preamble, data, closing])
-    size = data_size && IO.iodata_length(preamble) + data_size + IO.iodata_length(closing)
+    size = IO.iodata_length(preamble) + data_size + IO.iodata_length(closing)
     {body, "multipart/related; boundary=#{boundary}", size}
   end
 
-  # Normalises `data` into `{enumerable, byte_size | nil}`. A File.Stream is left
-  # lazy and its size read from the filesystem; iodata is wrapped and measured.
+  # Normalises `data` into `{enumerable, byte_size}`. iodata is measured; a
+  # File.Stream stays lazy with its size read from disk. Size-less streams aren't
+  # supported — Google's simple/multipart uploads need a content-length, so
+  # stream from a file or read the content into memory.
   defp payload(%File.Stream{path: path} = stream), do: {stream, File.stat!(path).size}
-  defp payload(data), do: {[data], IO.iodata_length(data)}
+  defp payload(data) when is_binary(data) or is_list(data), do: {[data], IO.iodata_length(data)}
+
+  defp payload(other) do
+    raise ArgumentError,
+          "upload data must be iodata or a File.Stream (uploads require a known " <>
+            "content-length); got: #{inspect(other)}"
+  end
 
   # Content type of the uploaded bytes: an explicit `:content_type` opt, else the
   # metadata's `content_type`, else octet-stream.
@@ -97,7 +106,6 @@ defmodule <%= root %>.Request do
       "application/octet-stream"
   end
 
-  defp content_length(nil), do: []
   defp content_length(size), do: [{"content-length", Integer.to_string(size)}]
 
   # `alt=media` downloads return raw bytes, so decoding is disabled automatically.

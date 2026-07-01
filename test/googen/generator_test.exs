@@ -122,6 +122,43 @@ defmodule Googen.GeneratorTest do
     assert error.message == "nope"
   end
 
+  test "multipart streams a File.Stream from disk with a computed content-length" do
+    path = Path.join(System.tmp_dir!(), "googen_upload_#{System.unique_integer([:positive])}.bin")
+    File.write!(path, String.duplicate("x", 1000))
+    on_exit(fn -> File.rm(path) end)
+
+    parent = self()
+
+    adapter = fn request ->
+      send(parent, {:upload, request.headers, request.body})
+      {request, %Req.Response{status: 200, body: %{"name" => "ok"}}}
+    end
+
+    metadata = struct(Gcp.Widget.Model.Widget, name: "obj")
+
+    assert {:ok, _} =
+             Gcp.Widget.Widgets.insert_multipart(metadata, File.stream!(path),
+               token: "tok",
+               content_type: "application/octet-stream",
+               req: [adapter: adapter]
+             )
+
+    assert_received {:upload, headers, body}
+    bytes = body |> Enum.to_list() |> IO.iodata_to_binary()
+    # content-length is set and matches the fully-assembled multipart body
+    assert [length] = headers["content-length"]
+    assert String.to_integer(length) == byte_size(bytes)
+    assert String.contains?(bytes, String.duplicate("x", 1000))
+  end
+
+  test "a size-less stream is rejected (Google uploads require a content-length)" do
+    stream = Stream.cycle(["x"]) |> Stream.take(3)
+
+    assert_raise ArgumentError, ~r/iodata or a File\.Stream/, fn ->
+      Gcp.Widget.Widgets.insert_media(stream, token: "tok")
+    end
+  end
+
   # Compiles the generated client into the VM. ParallelCompiler resolves the
   # cross-module references (models, runtime, the Jason.Encoder defimpl) as one
   # batch, so order doesn't matter and there are no "module not available" warnings.
