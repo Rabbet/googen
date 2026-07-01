@@ -8,7 +8,7 @@ defmodule <%= root %>.Request do
   alias <%= root %>.Response
 
   @base_url "<%= base_url %>"
-  @reserved [:token, :req, :decode]
+  @reserved [:token, :req, :decode, :content_type]
 
   @doc false
   def run(spec) do
@@ -19,6 +19,24 @@ defmodule <%= root %>.Request do
     [method: spec[:method], url: url]
     |> put(:params, query != [] && query)
     |> put(:json, body)
+    |> put(:auth, call[:token] && {:bearer, call[:token]})
+    |> Keyword.merge(call[:req] || [])
+    |> Req.request()
+    |> Response.decode(spec[:decode], decode_flag(call, query))
+  end
+
+  @doc false
+  # Media upload: builds a raw (`uploadType=media`) or `multipart/related`
+  # (`uploadType=multipart`) body and posts it to the upload endpoint.
+  def upload(spec) do
+    {call, params} = Keyword.split(spec[:opts] || [], @reserved)
+    {query, _body} = route_params(params, spec[:params] || %{}, spec[:query] || [])
+    query = [{"uploadType", spec[:upload_type]} | query]
+    url = @base_url |> URI.merge(fill(spec[:url], spec[:path_params] || %{})) |> URI.to_string()
+    {body, content_type} = build_upload(spec, call)
+
+    [method: spec[:method], url: url, params: query, body: body]
+    |> Keyword.put(:headers, [{"content-type", content_type}])
     |> put(:auth, call[:token] && {:bearer, call[:token]})
     |> Keyword.merge(call[:req] || [])
     |> Req.request()
@@ -35,6 +53,47 @@ defmodule <%= root %>.Request do
         _ -> {q, b}
       end
     end)
+  end
+
+  # A raw media body, or a multipart/related body pairing JSON metadata with the
+  # content. Returns `{body, content_type}`.
+  defp build_upload(spec, call) do
+    case spec[:upload_type] do
+      "media" -> {spec[:data], content_type(spec, call)}
+      "multipart" -> multipart_body(spec, call)
+    end
+  end
+
+  defp multipart_body(spec, call) do
+    boundary = "googen" <> Base.url_encode64(:crypto.strong_rand_bytes(12), padding: false)
+
+    body = [
+      "--", boundary, "\r\n",
+      "Content-Type: application/json; charset=UTF-8\r\n\r\n",
+      Jason.encode!(spec[:metadata]), "\r\n",
+      "--", boundary, "\r\n",
+      "Content-Type: ", content_type(spec, call), "\r\n\r\n",
+      spec[:data], "\r\n",
+      "--", boundary, "--"
+    ]
+
+    {body, "multipart/related; boundary=#{boundary}"}
+  end
+
+  # Content type of the uploaded bytes: an explicit `:content_type` opt, else the
+  # metadata's `content_type`, else octet-stream.
+  defp content_type(spec, call) do
+    call[:content_type] || (is_map(spec[:metadata]) && Map.get(spec[:metadata], :content_type)) ||
+      "application/octet-stream"
+  end
+
+  # `alt=media` downloads return raw bytes, so decoding is disabled automatically.
+  defp decode_flag(call, query) do
+    if Enum.any?(query, fn {k, v} -> k == "alt" and to_string(v) == "media" end) do
+      Keyword.put(call, :decode, false)
+    else
+      call
+    end
   end
 
   # Substitutes `{name}` / `{+name}` path templates with their values.

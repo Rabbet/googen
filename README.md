@@ -20,8 +20,8 @@ builder-pattern request API. googen takes a different tack:
 - **Self-contained clients.** Each generated package vendors its own ~150-line
   runtime and depends only on `req` + `jason`. No shared runtime dependency, so
   every client is independently publishable to Hex.
-- **Flat, stateless API.** No `Connection` struct, no `.V1.`/`.Api.` nesting —
-  `Gcp.Storage.Objects.get(bucket, object, token: tok)`.
+- **Flat, stateless API.** No `Connection` struct, no nesting —
+  `Gcp.Storage.Objects.get(bucket, object, token: token)`.
 - **snake_case fields, exact wire names.** Struct fields read like Elixir
   (`bucket.time_created`) while the exact JSON key (`timeCreated`, even
   `satisfiesPZS`) is baked in per field — no lossy round-trip heuristics.
@@ -79,6 +79,18 @@ With no argument, `fetch`/`generate` operate on every API in `config/apis.json`.
 the Hex package (`gcp_storage`). Run `mix googen.discover <term>` to find the
 discovery URL for an API you want to add.
 
+## How it works
+
+```
+discovery JSON  →  parsed to maps (Jason, keys: :atoms)
+                →  Model / Api / Endpoint / Type structs
+                →  EEx templates in templates/client/
+                →  clients/<package>/
+```
+
+The pipeline lives in `lib/googen/generator.ex`; discovery parsing dropped the
+`google_api_discovery` dependency in favour of decoding straight to maps.
+
 ## Using a generated client
 
 Authentication is the caller's concern — pass an OAuth2 bearer token (e.g. from
@@ -100,15 +112,3 @@ token = Goth.fetch!(MyApp.Goth).token
 Required path/query parameters are positional; everything else — query
 parameters, the request `:body`, and `:token` — rides in the trailing `opts`
 keyword. Every call returns `{:ok, decoded}` or `{:error, %Gcp.Storage.Error{}}`.
-
-## How it works
-
-```
-discovery JSON  →  parsed to maps (Jason, keys: :atoms)
-                →  Model / Api / Endpoint / Type structs
-                →  EEx templates in templates/client/
-                →  clients/<package>/
-```
-
-The pipeline lives in `lib/googen/generator.ex`; discovery parsing dropped the
-`google_api_discovery` dependency in favour of decoding straight to maps.

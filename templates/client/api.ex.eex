@@ -23,7 +23,18 @@ defmodule <%= root %>.<%= api.name %> do
   """
   @spec <%= ep.typespec %>
   def <%= ep.name %>(<%= signature_args(ep) %>opts \\ []) do
-    Request.run(
+    <%= if ep.upload do %>Request.upload(
+      method: <%= inspect(ep.method) %>,
+      url: <%= inspect(ep.path) %>,
+      path_params: %{<%= path_params(ep) %>},
+      upload_type: <%= inspect(upload_type(ep)) %>,<%= if ep.upload == :multipart do %>
+      metadata: metadata,<% end %>
+      data: data,
+      query: [<%= required_query(ep) %>],
+      params: %{<%= param_specs(ep, global_params) %>},
+      decode: <%= decode_target(ep, root) %>,
+      opts: opts
+    )<% else %>Request.run(
       method: <%= inspect(ep.method) %>,
       url: <%= inspect(ep.path) %>,
       path_params: %{<%= path_params(ep) %>},
@@ -31,6 +42,6 @@ defmodule <%= root %>.<%= api.name %> do
       params: %{<%= param_specs(ep, global_params) %>},
       decode: <%= decode_target(ep, root) %>,
       opts: opts
-    )
+    )<% end %>
   end
 <% end %>end

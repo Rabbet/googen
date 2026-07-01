@@ -151,6 +151,10 @@ defmodule Googen.Generator.Renderer do
     end)
   end
 
+  @doc "The `uploadType` query value for an upload endpoint."
+  def upload_type(%{upload: :media}), do: "media"
+  def upload_type(%{upload: :multipart}), do: "multipart"
+
   @doc "The module a successful response decodes into, or `nil` for raw responses."
   def decode_target(ep, _root) do
     case ep.return.struct do
