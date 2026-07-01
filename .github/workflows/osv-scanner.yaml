@@ -1,0 +1,42 @@
+# OSV-Scanner — scans dependency manifests against the OSV vulnerability DB.
+# https://github.com/google/osv-scanner
+
+name: OSV-Scanner
+
+on:
+  pull_request:
+    branches: ["main"]
+  schedule:
+    - cron: "42 20 * * 3"
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  sca-scan:
+    permissions:
+      contents: read
+      security-events: write # upload SARIF to Security tab
+      actions: read # required by upload-sarif on private repos
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Run OSV-Scanner
+        continue-on-error: true
+        uses: google/osv-scanner-action/osv-scanner-action@9a498708959aeaef5ef730655706c5a1df1edbc2 # v2.3.8
+        with:
+          scan-args: |-
+            --format=sarif
+            --output-file=osv-scanner.sarif
+            -r
+            ./
+
+      - name: Upload SARIF
+        if: ${{ !cancelled() }}
+        uses: github/codeql-action/upload-sarif@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v4.36.2
+        with:
+          sarif_file: osv-scanner.sarif

@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: ["main"]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Elixir ${{ matrix.elixir }} / OTP ${{ matrix.otp }}
+    strategy:
+      fail-fast: false
+      matrix:
+        otp: ["27", "28", "29"]
+        elixir: ["1.18", "1.19", "1.20"]
+        exclude:
+          # Elixir 1.18 supports OTP 25-27
+          - elixir: "1.18"
+            otp: "28"
+          - elixir: "1.18"
+            otp: "29"
+          # Elixir 1.19 supports OTP 26-28
+          - elixir: "1.19"
+            otp: "29"
+    env:
+      MIX_ENV: test
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Compile (warnings as errors)
+        run: mix compile --warnings-as-errors
+
+      - name: Check formatting
+        run: mix format --check-formatted
+
+      - name: Run tests
+        run: mix test --warnings-as-errors
