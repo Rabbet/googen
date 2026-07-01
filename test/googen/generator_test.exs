@@ -140,7 +140,10 @@ defmodule Googen.GeneratorTest do
 
     # caller forces alt=media via :req params -> raw bytes, no decoding
     assert {:ok, body} =
-             Gcp.Widget.Widgets.get("w1", token: "t", req: [adapter: json, params: [alt: "media"]])
+             Gcp.Widget.Widgets.get("w1",
+               token: "t",
+               req: [adapter: json, params: [alt: "media"]]
+             )
 
     assert body == ~s({"name":"w"})
 
