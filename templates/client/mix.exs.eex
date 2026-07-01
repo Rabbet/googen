@@ -33,7 +33,7 @@ defmodule <%= root %>.MixProject do
   defp package do
     [
       licenses: ["Apache-2.0"],
-      files: ~w(lib mix.exs README.md .formatter.exs),
+      files: ~w(lib mix.exs README.md LICENSE .formatter.exs),
       links: %{"Google API docs" => <%= inspect(docs_link) %>}
     ]
   end

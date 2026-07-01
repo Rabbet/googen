@@ -150,6 +150,7 @@ defmodule Googen.Generator do
   defp write_package_files(token) do
     File.write!(Path.join(token.root_dir, "mix.exs"), Renderer.mix_exs(token))
     File.write!(Path.join(token.root_dir, "README.md"), Renderer.readme(token))
+    File.write!(Path.join(token.root_dir, "LICENSE"), Renderer.license())
     File.write!(Path.join(token.root_dir, ".formatter.exs"), Renderer.formatter())
     File.write!(Path.join(token.root_dir, ".gitignore"), Renderer.gitignore())
     token

@@ -15,6 +15,7 @@ defmodule Googen.Generator.Renderer do
   EEx.function_from_file(:def, :decode, Path.join(@tpl, "decode.ex.eex"), [:root])
   EEx.function_from_file(:def, :error, Path.join(@tpl, "error.ex.eex"), [:root])
   EEx.function_from_file(:def, :encoder, Path.join(@tpl, "encoder.ex.eex"), [:root, :modules])
+  EEx.function_from_file(:def, :license, Path.join(@tpl, "LICENSE.eex"), [])
 
   EEx.function_from_file(:def, :mix_exs_tpl, Path.join(@tpl, "mix.exs.eex"), [
     :root,
