@@ -1,0 +1,73 @@
+{
+  "kind": "discovery#restDescription",
+  "id": "widget:v1",
+  "name": "widget",
+  "version": "v1",
+  "revision": "20240101",
+  "title": "Widget API",
+  "documentationLink": "https://example.com/widget/docs",
+  "rootUrl": "https://widget.googleapis.com/",
+  "servicePath": "widget/v1/",
+  "parameters": {
+    "alt": { "type": "string", "location": "query", "description": "Data format for response." },
+    "prettyPrint": { "type": "boolean", "location": "query", "description": "Returns response with indentations." }
+  },
+  "schemas": {
+    "Widget": {
+      "id": "Widget",
+      "type": "object",
+      "description": "A \"widget\" resource.",
+      "properties": {
+        "name": { "type": "string", "description": "The widget name." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation time." },
+        "satisfiesPZS": { "type": "boolean", "description": "Reserved." },
+        "size": { "type": "integer", "description": "Size in bytes." },
+        "owner": { "$ref": "Owner", "description": "The owner." },
+        "parts": { "type": "array", "items": { "$ref": "Part" }, "description": "Component parts." },
+        "tags": { "type": "array", "items": { "type": "string" }, "description": "Free-form tags." },
+        "labels": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Key/value labels." },
+        "config": {
+          "type": "object",
+          "description": "Inline configuration.",
+          "properties": { "maxItems": { "type": "integer" } }
+        }
+      }
+    },
+    "Owner": {
+      "id": "Owner",
+      "type": "object",
+      "properties": { "email": { "type": "string", "description": "Owner email." } }
+    },
+    "Part": {
+      "id": "Part",
+      "type": "object",
+      "properties": { "sku": { "type": "string", "description": "Stock keeping unit." } }
+    }
+  },
+  "resources": {
+    "widgets": {
+      "methods": {
+        "get": {
+          "id": "widget.widgets.get",
+          "httpMethod": "GET",
+          "path": "widgets/{widgetId}",
+          "parameterOrder": ["widgetId"],
+          "parameters": {
+            "widgetId": { "type": "string", "location": "path", "required": true, "description": "The widget id." },
+            "fields": { "type": "string", "location": "query", "description": "Selector for a partial response." }
+          },
+          "response": { "$ref": "Widget" }
+        },
+        "insert": {
+          "id": "widget.widgets.insert",
+          "httpMethod": "POST",
+          "path": "widgets",
+          "request": { "$ref": "Widget" },
+          "response": { "$ref": "Widget" },
+          "supportsMediaUpload": true,
+          "mediaUpload": { "protocols": { "simple": { "path": "/upload/widget/v1/widgets" } } }
+        }
+      }
+    }
+  }
+}

@@ -14,7 +14,7 @@ defmodule Googen.Generator.Type do
     * `{:map, mod}`        — a `%{String.t() => mod.t()}` map
   """
 
-  alias Googen.Generator.ResourceContext, as: Ctx
+  alias Googen.Generator.ResourceContext
 
   @enforce_keys [:typespec, :decode]
   defstruct [:name, :struct, :typespec, :decode]
@@ -26,8 +26,8 @@ defmodule Googen.Generator.Type do
           decode: term()
         }
 
-  @spec from_schema(map, Ctx.t()) :: t
-  def from_schema(schema, context \\ Ctx.empty())
+  @spec from_schema(map, ResourceContext.t()) :: t
+  def from_schema(schema, context \\ ResourceContext.empty())
 
   # Maps: additionalProperties describes the value type.
   def from_schema(%{additionalProperties: ap}, context) do
@@ -38,9 +38,9 @@ defmodule Googen.Generator.Type do
       ref ->
         %__MODULE__{
           name: "map",
-          struct: Ctx.struct_name(context, ref),
-          typespec: "%{optional(String.t()) => #{Ctx.typespec(context, ref)}}",
-          decode: {:map, Ctx.struct_name(context, ref)}
+          struct: ResourceContext.struct_name(context, ref),
+          typespec: "%{optional(String.t()) => #{ResourceContext.typespec(context, ref)}}",
+          decode: {:map, ResourceContext.struct_name(context, ref)}
         }
     end
   end
@@ -72,8 +72,8 @@ defmodule Googen.Generator.Type do
   # References to named schemas.
   def from_schema(%{"$ref": ref}, context) when not is_nil(ref) do
     model = context.models_by_name[ref]
-    struct = Ctx.struct_name(context, ref)
-    spec = Ctx.typespec(context, ref)
+    struct = ResourceContext.struct_name(context, ref)
+    spec = ResourceContext.typespec(context, ref)
 
     if model && model.is_array do
       %__MODULE__{
@@ -121,9 +121,9 @@ defmodule Googen.Generator.Type do
   def from_schema(%{type: "object"}, context),
     do: %__MODULE__{
       name: "object",
-      struct: Ctx.struct_name(context),
-      typespec: Ctx.typespec(context),
-      decode: {:struct, Ctx.struct_name(context)}
+      struct: ResourceContext.struct_name(context),
+      typespec: ResourceContext.typespec(context),
+      decode: {:struct, ResourceContext.struct_name(context)}
     }
 
   def from_schema(_schema, _context),
