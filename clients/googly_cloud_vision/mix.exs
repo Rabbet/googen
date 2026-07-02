@@ -14,7 +14,7 @@ defmodule Googly.CloudVision.MixProject do
       deps: deps(),
       description: "Google Cloud Vision API client library.",
       package: package(),
-      docs: [main: "readme", extras: ["README.md"]],
+      docs: [main: "readme", extras: ["README.md", "CHANGELOG.md"]],
       source_url: "https://github.com/Rabbet/googly/tree/main/clients/googly_cloud_vision"
     ]
   end
@@ -34,7 +34,7 @@ defmodule Googly.CloudVision.MixProject do
   defp package do
     [
       licenses: ["Apache-2.0"],
-      files: ~w(lib mix.exs README.md LICENSE .formatter.exs),
+      files: ~w(lib mix.exs README.md CHANGELOG.md LICENSE .formatter.exs),
       links: %{
         "GitHub" => "https://github.com/Rabbet/googly/tree/main/clients/googly_cloud_vision",
         "Google API docs" => "https://cloud.google.com/vision/"

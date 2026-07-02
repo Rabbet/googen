@@ -6,6 +6,7 @@ defmodule Googly.Generator do
 
   require Logger
 
+  alias Googly.Changelog
   alias Googly.Generator.Api
   alias Googly.Generator.Endpoint
   alias Googly.Generator.Model
@@ -153,6 +154,15 @@ defmodule Googly.Generator do
     File.write!(Path.join(token.root_dir, "LICENSE"), Renderer.license())
     File.write!(Path.join(token.root_dir, ".formatter.exs"), Renderer.formatter())
     File.write!(Path.join(token.root_dir, ".gitignore"), Renderer.gitignore())
+
+    # The changelog accumulates across releases, so lay down a baseline only for
+    # a brand-new client — never overwrite an existing one (see Googly.Changelog).
+    Changelog.ensure(
+      token.root_dir,
+      Renderer.version(token),
+      Date.utc_today() |> Date.to_iso8601()
+    )
+
     token
   end
 

@@ -38,7 +38,7 @@ defmodule Googly.GeneratorTest do
   end
 
   test "produces the package scaffolding", %{root: root} do
-    for file <- ~w(mix.exs README.md LICENSE) do
+    for file <- ~w(mix.exs README.md CHANGELOG.md LICENSE) do
       assert File.exists?(Path.join(root, file)), "missing #{file}"
     end
   end

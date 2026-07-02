@@ -14,7 +14,7 @@ defmodule <%= root %>.MixProject do
       deps: deps(),
       description: <%= inspect(description) %>,
       package: package(),
-      docs: [main: "readme", extras: ["README.md"]],
+      docs: [main: "readme", extras: ["README.md", "CHANGELOG.md"]],
       source_url: "https://github.com/Rabbet/googly/tree/main/clients/<%= package %>"
     ]
   end
@@ -34,7 +34,7 @@ defmodule <%= root %>.MixProject do
   defp package do
     [
       licenses: ["Apache-2.0"],
-      files: ~w(lib mix.exs README.md LICENSE .formatter.exs),
+      files: ~w(lib mix.exs README.md CHANGELOG.md LICENSE .formatter.exs),
       links: %{
         "GitHub" => "https://github.com/Rabbet/googly/tree/main/clients/<%= package %>",
         "Google API docs" => <%= inspect(docs_link) %>

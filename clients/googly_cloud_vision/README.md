@@ -10,7 +10,7 @@ A modern, self-contained Elixir client for the Google Cloud Vision API, generate
 
 ```elixir
 def deps do
-  [{:googly_cloud_vision, "~> 0.1.0"}]
+  [{:googly_cloud_vision, "~> 0.1.1"}]
 end
 ```
 
@@ -22,7 +22,7 @@ Authentication is your concern — pass an OAuth2 bearer token (e.g. from
 ```elixir
 token = Goth.fetch!(MyApp.Goth).token
 
-{:ok, result} = Googly.CloudVision.Operations.cancel(token: token)
+{:ok, result} = Googly.CloudVision.Files.annotate(token: token)
 ```
 
 Every call returns `{:ok, decoded}` on success. Failures are

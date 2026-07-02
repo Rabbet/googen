@@ -15,7 +15,7 @@ defmodule Googly.CloudStorage.MixProject do
       description:
         "Google Cloud Storage JSON API client library. Stores and retrieves potentially large, immutable data objects.",
       package: package(),
-      docs: [main: "readme", extras: ["README.md"]],
+      docs: [main: "readme", extras: ["README.md", "CHANGELOG.md"]],
       source_url: "https://github.com/Rabbet/googly/tree/main/clients/googly_cloud_storage"
     ]
   end
@@ -35,7 +35,7 @@ defmodule Googly.CloudStorage.MixProject do
   defp package do
     [
       licenses: ["Apache-2.0"],
-      files: ~w(lib mix.exs README.md LICENSE .formatter.exs),
+      files: ~w(lib mix.exs README.md CHANGELOG.md LICENSE .formatter.exs),
       links: %{
         "GitHub" => "https://github.com/Rabbet/googly/tree/main/clients/googly_cloud_storage",
         "Google API docs" => "https://developers.google.com/storage/docs/json_api/"
