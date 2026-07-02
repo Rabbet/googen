@@ -169,9 +169,11 @@ defmodule Googly.Generator.Renderer do
 
   # -- derived package metadata ----------------------------------------------
 
-  # Preserve the existing version across regenerations (release bumps it); new
-  # clients start at 0.1.0.
-  defp version(token) do
+  @doc """
+  The client's version: preserved from the existing `mix.exs` across
+  regenerations (release bumps it), or `0.1.0` for a brand-new client.
+  """
+  def version(token) do
     path = Path.join(token.root_dir, "mix.exs")
 
     with {:ok, content} <- File.read(path),

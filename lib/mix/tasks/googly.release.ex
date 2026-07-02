@@ -21,12 +21,20 @@ defmodule Mix.Tasks.Googly.Release do
       git add . && git commit        # commit the regenerated + bumped output
       # then run each printed `mix hex.publish` yourself
 
-  Versions live in each client's `mix.exs` and are preserved across
+  A bump also prepends a dated entry to each client's `CHANGELOG.md`. The default
+  note is generic (the discovery docs aren't committed, so there's no prior
+  surface to diff against) — edit it to say what changed before you commit and
+  publish.
+
+  Versions and the changelog live in each client's dir and are preserved across
   regenerations, so bumps stick.
   """
   use Mix.Task
 
   alias Googly.ApiConfig
+  alias Googly.Changelog
+
+  @release_note "Regenerated from the latest Google discovery document."
 
   @impl true
   def run(args) do
@@ -43,10 +51,17 @@ defmodule Mix.Tasks.Googly.Release do
     configs =
       if names == [], do: ApiConfig.load_all(), else: Enum.flat_map(names, &ApiConfig.load/1)
 
+    date = Date.utc_today() |> Date.to_iso8601()
+
     dirs =
       Enum.map(configs, fn config ->
         dir = ApiConfig.client_dir(config)
-        if bump, do: bump_version(dir, bump)
+
+        if bump do
+          {_current, next} = bump_version(dir, bump)
+          Changelog.add_release(dir, next, date, [@release_note])
+        end
+
         dir
       end)
 
@@ -68,6 +83,7 @@ defmodule Mix.Tasks.Googly.Release do
     next = next_version(current, kind)
     File.write!(path, Regex.replace(~r/@version "[\d.]+"/, content, ~s(@version "#{next}")))
     Mix.shell().info("#{Path.basename(dir)}: #{current} -> #{next}")
+    {current, next}
   end
 
   defp next_version(current, kind) do

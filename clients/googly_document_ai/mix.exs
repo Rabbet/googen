@@ -14,7 +14,7 @@ defmodule Googly.DocumentAI.MixProject do
       deps: deps(),
       description: "Google Cloud Document AI API client library.",
       package: package(),
-      docs: [main: "readme", extras: ["README.md"]],
+      docs: [main: "readme", extras: ["README.md", "CHANGELOG.md"]],
       source_url: "https://github.com/Rabbet/googly/tree/main/clients/googly_document_ai"
     ]
   end
@@ -34,7 +34,7 @@ defmodule Googly.DocumentAI.MixProject do
   defp package do
     [
       licenses: ["Apache-2.0"],
-      files: ~w(lib mix.exs README.md LICENSE .formatter.exs),
+      files: ~w(lib mix.exs README.md CHANGELOG.md LICENSE .formatter.exs),
       links: %{
         "GitHub" => "https://github.com/Rabbet/googly/tree/main/clients/googly_document_ai",
         "Google API docs" => "https://cloud.google.com/document-ai/docs/"

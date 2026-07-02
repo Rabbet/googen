@@ -10,7 +10,7 @@ A modern, self-contained Elixir client for the Google Cloud Storage JSON API, ge
 
 ```elixir
 def deps do
-  [{:googly_cloud_storage, "~> 0.1.0"}]
+  [{:googly_cloud_storage, "~> 0.1.1"}]
 end
 ```
 
