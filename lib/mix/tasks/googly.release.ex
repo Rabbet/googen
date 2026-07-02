@@ -29,7 +29,9 @@ defmodule Mix.Tasks.Googly.Release do
         true -> :patch
       end
 
-    configs = if names == [], do: ApiConfig.load_all(), else: Enum.flat_map(names, &ApiConfig.load/1)
+    configs =
+      if names == [], do: ApiConfig.load_all(), else: Enum.flat_map(names, &ApiConfig.load/1)
+
     Enum.each(configs, &release(&1, bump))
   end
 
