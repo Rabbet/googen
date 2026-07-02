@@ -8,8 +8,23 @@ defmodule Googly.Generator.Renderer do
 
   @tpl Path.expand("../../../templates/client", __DIR__)
 
-  EEx.function_from_file(:def, :model, Path.join(@tpl, "model.ex.eex"), [:model, :root])
-  EEx.function_from_file(:def, :api, Path.join(@tpl, "api.ex.eex"), [:api, :root, :global_params])
+  # Fallback documentation host when a discovery doc omits `documentationLink`,
+  # and the base for absolutizing root-relative links in descriptions.
+  @default_docs_link "https://cloud.google.com/"
+
+  EEx.function_from_file(:def, :model, Path.join(@tpl, "model.ex.eex"), [
+    :model,
+    :root,
+    :docs_link
+  ])
+
+  EEx.function_from_file(:def, :api, Path.join(@tpl, "api.ex.eex"), [
+    :api,
+    :root,
+    :global_params,
+    :docs_link
+  ])
+
   EEx.function_from_file(:def, :request, Path.join(@tpl, "request.ex.eex"), [:root, :base_url])
   EEx.function_from_file(:def, :response, Path.join(@tpl, "response.ex.eex"), [:root])
   EEx.function_from_file(:def, :decode, Path.join(@tpl, "decode.ex.eex"), [:root])
@@ -70,17 +85,45 @@ defmodule Googly.Generator.Renderer do
 
   # -- template helpers -------------------------------------------------------
 
-  @doc "Formats a description for embedding in a heredoc `@doc`, indenting wrapped lines."
-  def doc(nil, _indent), do: ""
+  @doc """
+  Formats a description for embedding in a heredoc `@doc`, indenting wrapped
+  lines and repairing the Markdown quirks in Google's prose (see
+  `normalize_markdown_links/2` and `close_dangling_inline_code/1`). `base_url`
+  is the API's documentation host, used to absolutize root-relative links.
+  """
+  def doc(str, indent, base_url \\ @default_docs_link)
+  def doc(nil, _indent, _base_url), do: ""
 
-  def doc(str, indent) do
+  def doc(str, indent, base_url) do
     prefix = String.duplicate(" ", indent)
 
     str
+    |> normalize_markdown_links(base_url)
+    |> close_dangling_inline_code()
     |> String.replace("\\", "\\\\")
     |> String.replace(~s("""), ~s(\\"\\"\\"))
     |> String.replace("\#{", "\\\#{")
     |> String.replace(~r/(\n+)([^\n])/, "\\1#{prefix}\\2")
+  end
+
+  # Google descriptions carry root-relative doc links (`](/foo/bar)`); ExDoc reads
+  # those as local file references and warns. Resolve each against the API's own
+  # documentation host (`base_url`) so it becomes a real URL — Cloud Storage lives
+  # under developers.google.com, most others under cloud.google.com. Absolute and
+  # protocol-relative (`//host`) targets are left alone.
+  defp normalize_markdown_links(str, base_url) do
+    Regex.replace(~r{\]\((/(?!/)[^)\s]*)\)}, str, fn _match, path ->
+      "](" <> URI.to_string(URI.merge(base_url, path)) <> ")"
+    end)
+  end
+
+  # Some descriptions open an inline `code` span they never close, which makes
+  # EarmarkParser (ExDoc) warn about "unclosed backquotes". This is upstream-prose
+  # repair, not real Markdown parsing (not worth a parser dependency): when the
+  # backtick count is odd, append one to close the dangling span.
+  defp close_dangling_inline_code(str) do
+    odd? = str |> String.graphemes() |> Enum.count(&(&1 == "`")) |> rem(2) == 1
+    if odd?, do: str <> "`", else: str
   end
 
   @doc "True when a model needs the `Decode` helper aliased."
@@ -192,7 +235,8 @@ defmodule Googly.Generator.Renderer do
     if String.contains?(raw, "Google"), do: raw, else: "Google " <> raw
   end
 
-  defp docs_link(token), do: token.rest[:documentationLink] || "https://cloud.google.com/"
+  @doc "The API's documentation URL, or the Google-docs fallback."
+  def docs_link(token), do: token.rest[:documentationLink] || @default_docs_link
 
   defp description(token) do
     base = "#{title(token)} client library."

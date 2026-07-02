@@ -6,7 +6,7 @@ defmodule Googly.DocumentAI.Model.GoogleCloudDocumentaiV1beta3Processor do
 
   ## Attributes
 
-  *   `active_schema_version` (*type:* `String.t()`) - Optional. SchemaVersion used by the Processor. It is the same as Processor's DatasetSchema.schema_version Format is `projects/{project}/locations/{location}/schemas/{schema}/schemaVersions/{schema_version}
+  *   `active_schema_version` (*type:* `String.t()`) - Optional. SchemaVersion used by the Processor. It is the same as Processor's DatasetSchema.schema_version Format is `projects/{project}/locations/{location}/schemas/{schema}/schemaVersions/{schema_version}`
   *   `create_time` (*type:* `DateTime.t()`) - Output only. The time the processor was created.
   *   `default_processor_version` (*type:* `String.t()`) - The default processor version.
   *   `display_name` (*type:* `String.t()`) - The display name of the processor.

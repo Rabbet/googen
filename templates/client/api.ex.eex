@@ -2,19 +2,19 @@
 
 defmodule <%= root %>.<%= api.name %> do
   @moduledoc """
-  <%= doc(api.description, 2) %>
+  <%= doc(api.description, 2, docs_link) %>
   """
 
   alias <%= root %>.Request
 <%= for ep <- api.endpoints do %>
   @doc """
-  <%= doc(ep.description, 2) %>
+  <%= doc(ep.description, 2, docs_link) %>
 
   ## Parameters
 <%= for p <- ep.required_parameters do %>
-  *   `<%= p.variable_name %>` (*type:* `<%= p.type.typespec %>`) - <%= doc(p.description, 6) %><% end %>
+  *   `<%= p.variable_name %>` (*type:* `<%= p.type.typespec %>`) - <%= doc(p.description, 6, docs_link) %><% end %>
   *   `opts` (*type:* `keyword()`) - Query and call options (`:token`, plus any of the below)<%= for p <- optional_params(ep, global_params) do %>
-      *   `<%= p.name %>` (*type:* `<%= p.type.typespec %>`) - <%= doc(p.description, 10) %><% end %>
+      *   `<%= p.name %>` (*type:* `<%= p.type.typespec %>`) - <%= doc(p.description, 10, docs_link) %><% end %>
 
   ## Returns
 

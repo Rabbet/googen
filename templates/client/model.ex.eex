@@ -2,11 +2,11 @@
 
 defmodule <%= root %>.Model.<%= Macro.camelize(model.name) %> do
   @moduledoc """
-  <%= doc(model.description, 2) %><%= unless model.properties == [] do %>
+  <%= doc(model.description, 2, docs_link) %><%= unless model.properties == [] do %>
 
   ## Attributes
   <%= for p <- model.properties do %>
-  *   `<%= p.name %>` (*type:* `<%= p.type.typespec %>`) - <%= doc(p.description, 6) %><% end %><% end %>
+  *   `<%= p.name %>` (*type:* `<%= p.type.typespec %>`) - <%= doc(p.description, 6, docs_link) %><% end %><% end %>
   """
 <%= if uses_decode?(model) do %>
   alias <%= root %>.Decode
