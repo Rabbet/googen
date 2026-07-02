@@ -107,9 +107,11 @@ defmodule Googly.Generator do
   end
 
   defp write_models(token) do
+    docs_link = Renderer.docs_link(token)
+
     Enum.each(token.models, fn model ->
       path = Path.join([token.lib_dir, "model", model.filename])
-      File.write!(path, Renderer.model(model, token.module_root))
+      File.write!(path, Renderer.model(model, token.module_root, docs_link))
     end)
 
     Logger.info("Wrote #{length(token.models)} models")
@@ -117,10 +119,12 @@ defmodule Googly.Generator do
   end
 
   defp write_apis(token) do
+    docs_link = Renderer.docs_link(token)
+
     Enum.each(token.apis, fn api ->
       path = Path.join(token.lib_dir, api.filename)
       File.mkdir_p!(Path.dirname(path))
-      File.write!(path, Renderer.api(api, token.module_root, token.global_params))
+      File.write!(path, Renderer.api(api, token.module_root, token.global_params, docs_link))
     end)
 
     Logger.info("Wrote #{length(token.apis)} resource modules")

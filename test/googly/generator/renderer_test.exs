@@ -17,6 +17,36 @@ defmodule Googly.Generator.RendererTest do
     test "indents wrapped lines" do
       assert Renderer.doc("line1\nline2", 2) == "line1\n  line2"
     end
+
+    test "closes an unterminated inline code span (ExDoc: unclosed backquotes)" do
+      # Google descriptions sometimes open a `code` span they never close.
+      assert Renderer.doc("Format is `projects/{project}/schemaVersions/{v}", 0) ==
+               "Format is `projects/{project}/schemaVersions/{v}`"
+    end
+
+    test "leaves balanced backticks untouched" do
+      assert Renderer.doc("call `foo`, such as: `OCR`, `INVOICE`.", 0) ==
+               "call `foo`, such as: `OCR`, `INVOICE`."
+    end
+
+    test "absolutizes root-relative links against the default docs host" do
+      assert Renderer.doc("see [regions](/document-ai/docs/regions).", 0) ==
+               "see [regions](https://cloud.google.com/document-ai/docs/regions)."
+    end
+
+    test "absolutizes root-relative links against the API's own docs host" do
+      # Cloud Storage's documentationLink lives under developers.google.com, not
+      # cloud.google.com — so the base URL must come from the discovery doc.
+      base = "https://developers.google.com/storage/docs/json_api/"
+
+      assert Renderer.doc("see [buckets](/storage/docs/buckets)", 0, base) ==
+               "see [buckets](https://developers.google.com/storage/docs/buckets)"
+    end
+
+    test "leaves absolute and protocol-relative links untouched" do
+      assert Renderer.doc("[x](https://example.com/y) and [z](//cdn/z)", 0) ==
+               "[x](https://example.com/y) and [z](//cdn/z)"
+    end
   end
 
   describe "wire_map/1" do

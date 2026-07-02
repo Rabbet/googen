@@ -6,7 +6,7 @@ defmodule Googly.DocumentAI.Model.GoogleCloudDocumentaiV1ProcessorTypeLocationIn
 
   ## Attributes
 
-  *   `location_id` (*type:* `String.t()`) - The location ID. For supported locations, refer to [regional and multi-regional support](/document-ai/docs/regions).
+  *   `location_id` (*type:* `String.t()`) - The location ID. For supported locations, refer to [regional and multi-regional support](https://cloud.google.com/document-ai/docs/regions).
   """
 
   defstruct [:location_id]
