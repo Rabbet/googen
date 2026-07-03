@@ -7,6 +7,7 @@ defmodule Googly.Generator.Endpoint do
   `_multipart` (metadata + bytes) variants that post to the upload endpoint.
   """
 
+  alias Googly.Generator.Naming
   alias Googly.Generator.Parameter
   alias Googly.Generator.ResourceContext
   alias Googly.Generator.Type
@@ -48,7 +49,7 @@ defmodule Googly.Generator.Endpoint do
     {required, optional} = Parameter.from_method(method, ctx)
 
     build(
-      Macro.underscore(verb),
+      Naming.field_name(verb),
       method,
       "/" <> ResourceContext.path(ctx, method[:path]),
       required,
@@ -62,7 +63,7 @@ defmodule Googly.Generator.Endpoint do
     {required, optional} = Parameter.from_method(method, ctx)
     required = required ++ [data_param()]
     optional = Enum.reject(optional, &(&1.location == "body"))
-    build(Macro.underscore(verb) <> "_media", method, path, required, optional, ctx, :media)
+    build(Naming.field_name(verb) <> "_media", method, path, required, optional, ctx, :media)
   end
 
   defp multipart_upload(verb, method, path, ctx) do
@@ -71,7 +72,7 @@ defmodule Googly.Generator.Endpoint do
     optional = Enum.reject(optional, &(&1.location == "body"))
 
     build(
-      Macro.underscore(verb) <> "_multipart",
+      Naming.field_name(verb) <> "_multipart",
       method,
       path,
       required,

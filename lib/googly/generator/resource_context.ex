@@ -5,6 +5,8 @@ defmodule Googly.Generator.ResourceContext do
   schemas), the API base path, and the map of known models by ref name.
   """
 
+  alias Googly.Generator.Naming
+
   defstruct namespace: "", property: "", base_path: "", models_by_name: %{}
 
   @type t :: %__MODULE__{
@@ -17,7 +19,7 @@ defmodule Googly.Generator.ResourceContext do
   def empty, do: %__MODULE__{}
 
   @doc "Fully-qualified model module for `ref`, e.g. `Googly.Storage.Model.Bucket`."
-  def struct_name(%{namespace: ns}, ref), do: "#{ns}.Model.#{Macro.camelize(ref)}"
+  def struct_name(%{namespace: ns}, ref), do: "#{ns}.Model.#{Naming.module_segment(ref)}"
 
   @doc "Model module for the current anonymous-object prefix."
   def struct_name(context), do: struct_name(context, default_name(context))
@@ -29,7 +31,7 @@ defmodule Googly.Generator.ResourceContext do
   def typespec(context), do: typespec(context, default_name(context))
 
   defp default_name(%{property: p}) when p in ["", nil], do: "Unknown"
-  defp default_name(%{property: p}), do: Macro.camelize(p)
+  defp default_name(%{property: p}), do: Naming.module_segment(p)
 
   def with_namespace(context, namespace), do: %{context | namespace: namespace}
   def with_base_path(context, base_path), do: %{context | base_path: path(context, base_path)}
@@ -37,11 +39,11 @@ defmodule Googly.Generator.ResourceContext do
 
   @doc "Descends into a nested property, extending the naming prefix."
   def with_property(context, property) do
-    %{context | property: "#{context.property}#{Macro.camelize(property)}"}
+    %{context | property: "#{context.property}#{Naming.module_segment(property)}"}
   end
 
   @doc "Name for an (possibly anonymous) schema under the current prefix."
-  def name(context, name), do: "#{context.property}#{Macro.camelize(name)}"
+  def name(context, name), do: "#{context.property}#{Naming.module_segment(name)}"
 
   @doc "Joins a path suffix onto the context base path."
   def path(_, "/" <> suffix), do: suffix

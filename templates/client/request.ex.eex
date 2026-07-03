@@ -7,7 +7,7 @@ defmodule <%= root %>.Request do
 
   alias <%= root %>.Response
 
-  @base_url "<%= base_url %>"
+  @base_url <%= inspect(base_url || "") %>
   @reserved [:token, :req, :decode, :content_type]
 
   @doc false

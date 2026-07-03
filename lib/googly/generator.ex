@@ -10,6 +10,7 @@ defmodule Googly.Generator do
   alias Googly.Generator.Api
   alias Googly.Generator.Endpoint
   alias Googly.Generator.Model
+  alias Googly.Generator.Naming
   alias Googly.Generator.Parameter
   alias Googly.Generator.Renderer
   alias Googly.Generator.ResourceContext
@@ -65,7 +66,7 @@ defmodule Googly.Generator do
 
   defp collect_resources(resources, prefix, context) do
     Enum.flat_map(resources, fn {name, resource} ->
-      segment = name |> to_string() |> String.replace("-", "_") |> Macro.camelize()
+      segment = name |> to_string() |> Naming.module_segment()
       qualified = prefix ++ [segment]
 
       endpoints =
@@ -133,7 +134,7 @@ defmodule Googly.Generator do
 
   defp write_runtime(token) do
     model_modules =
-      Enum.map(token.models, &"#{token.module_root}.Model.#{Macro.camelize(&1.name)}")
+      Enum.map(token.models, &Renderer.model_module(token.module_root, &1.name))
 
     File.write!(
       Path.join(token.lib_dir, "request.ex"),

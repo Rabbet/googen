@@ -5,6 +5,7 @@ defmodule Googly.Generator.Parameter do
   their snake_case `name`, translated back to `wire` on the query string.
   """
 
+  alias Googly.Generator.Naming
   alias Googly.Generator.ResourceContext
   alias Googly.Generator.Type
 
@@ -65,24 +66,17 @@ defmodule Googly.Generator.Parameter do
   def from_method_param(wire, schema, context), do: build(wire, schema, context, "")
 
   defp build(wire, schema, context, path) do
+    name = Naming.field_name(wire)
+
     %__MODULE__{
-      name: field_name(wire),
+      name: name,
       wire: wire,
-      variable_name: field_name(wire),
+      variable_name: name,
       description: schema[:description],
       type: Type.from_schema(schema, context),
       location: schema[:location] || "query",
       reserved?: reserved?(wire, path)
     }
-  end
-
-  # Snake-cases a wire name into a valid identifier, tolerating `$.xgafv` etc.
-  defp field_name(wire) do
-    wire
-    |> String.replace(~r/[^A-Za-z0-9]+/, "_")
-    |> Macro.underscore()
-    |> String.replace(~r/_+/, "_")
-    |> String.trim("_")
   end
 
   # `{+wire}` in a discovery path is RFC 6570 reserved expansion: the value is a
