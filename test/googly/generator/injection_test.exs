@@ -1,8 +1,9 @@
 defmodule Googly.Generator.InjectionTest do
   # A discovery document is untrusted input (googly generates a client for *any*
-  # API). Names taken from it — schema, property, resource, and method names —
-  # land in generated *code* positions (`defmodule`, `defstruct`, `def`), so a
-  # crafted name must not be able to break out and inject executable Elixir.
+  # API). Values taken from it — schema, property, resource, and method names, and
+  # the API `rootUrl` — land in generated *code* positions (`defmodule`,
+  # `defstruct`, `def`, the `@base_url` module attribute), so a crafted value must
+  # not be able to break out and inject executable Elixir.
   use ExUnit.Case, async: true
 
   alias Googly.Generator.Api
@@ -81,6 +82,18 @@ defmodule Googly.Generator.InjectionTest do
       src = Renderer.api(api, "Googly.Test", [], "https://x/")
       assert_single_inert_module(src)
     end
+
+    test "a malicious rootUrl cannot inject code into the @base_url attribute" do
+      # `rootUrl` is taken verbatim from the (untrusted) discovery doc and becomes
+      # the generated Request module's `@base_url` — a module attribute, evaluated
+      # at COMPILE time. An Elixir string literal honours `#{...}`, so an
+      # interpolation payload runs attacker code the moment the client compiles
+      # (no need to even break out of the quotes). `~S` keeps the payload literal
+      # here in the test rather than evaluating it.
+      malicious_root = ~S|https://evil.example/#{raise "pwned at compile time"}|
+      src = Renderer.request("Googly.Test", malicious_root)
+      assert_inert_base_url(src, malicious_root)
+    end
   end
 
   defp ctx do
@@ -117,5 +130,36 @@ defmodule Googly.Generator.InjectionTest do
       end)
 
     count
+  end
+
+  # The generated `@base_url` must parse to an inert string *literal* — a plain
+  # binary the URL library later reads as data. If the value is anything else (an
+  # interpolation `{:<<>>, ...}` node, injected sibling code, or an unparseable
+  # breakout), the discovery `rootUrl` reached a code position and can execute at
+  # compile time. A string literal categorically cannot, and must round-trip the
+  # exact `rootUrl` so the client still targets the right host.
+  defp assert_inert_base_url(src, expected) do
+    ast =
+      case Code.string_to_quoted(src) do
+        {:ok, ast} ->
+          ast
+
+        {:error, err} ->
+          flunk("generated Request did not parse (rootUrl escaped its slot): #{inspect(err)}\n\n#{src}")
+      end
+
+    values =
+      Macro.prewalk(ast, [], fn
+        {:@, _, [{:base_url, _, [value]}]} = node, acc -> {node, [value | acc]}
+        node, acc -> {node, acc}
+      end)
+      |> elem(1)
+
+    assert [value] = values, "expected exactly one @base_url attribute:\n\n#{src}"
+
+    assert is_binary(value),
+           "@base_url is not an inert string literal — rootUrl reached a code position:\n\n#{src}"
+
+    assert value == expected, "the exact rootUrl must round-trip untouched:\n\n#{src}"
   end
 end
