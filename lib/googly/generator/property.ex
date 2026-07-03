@@ -5,6 +5,7 @@ defmodule Googly.Generator.Property do
   / `time_created`, and `satisfiesPZS` / `satisfies_pzs`).
   """
 
+  alias Googly.Generator.Naming
   alias Googly.Generator.ResourceContext
   alias Googly.Generator.Type
 
@@ -22,7 +23,7 @@ defmodule Googly.Generator.Property do
   @spec from_schema(map, String.t(), ResourceContext.t()) :: t
   def from_schema(schema, wire, context) do
     %__MODULE__{
-      name: Macro.underscore(wire),
+      name: Naming.field_name(wire),
       wire: wire,
       type: Type.from_schema(schema, ResourceContext.with_property(context, wire)),
       description: schema[:description],

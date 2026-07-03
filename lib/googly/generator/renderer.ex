@@ -6,6 +6,8 @@ defmodule Googly.Generator.Renderer do
 
   require EEx
 
+  alias Googly.Generator.Naming
+
   @tpl Path.expand("../../../templates/client", __DIR__)
 
   # Fallback documentation host when a discovery doc omits `documentationLink`,
@@ -86,6 +88,22 @@ defmodule Googly.Generator.Renderer do
   def gitignore, do: "/_build/\n/cover/\n/deps/\n/doc/\n/mix.lock\nerl_crash.dump\n*.ez\n*.beam\n"
 
   # -- template helpers -------------------------------------------------------
+
+  @doc """
+  Fully-qualified module alias for a model. Re-sanitizes the segment through
+  `Naming.module_segment/1` at render time — a defence-in-depth chokepoint that
+  fails loudly rather than emitting an unsafe alias into a `defmodule`.
+  """
+  def model_module(root, name), do: "#{root}.Model.#{Naming.module_segment(name)}"
+
+  @doc """
+  Fully-qualified module alias for a resource. Its name may be dotted
+  (nested resources), so each segment is guarded independently.
+  """
+  def resource_module(root, name) do
+    segments = name |> String.split(".") |> Enum.map_join(".", &Naming.module_segment/1)
+    "#{root}.#{segments}"
+  end
 
   @doc """
   Formats a description for embedding in a heredoc `@doc`, indenting wrapped
