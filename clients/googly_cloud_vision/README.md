@@ -10,7 +10,7 @@ A modern, self-contained Elixir client for the Google Cloud Vision API, generate
 
 ```elixir
 def deps do
-  [{:googly_cloud_vision, "~> 0.1.1"}]
+  [{:googly_cloud_vision, "~> 0.1.2"}]
 end
 ```
 
@@ -26,9 +26,9 @@ token = Goth.fetch!(MyApp.Goth).token
 ```
 
 Every call returns `{:ok, decoded}` on success. Failures are
-`{:error, %Googly.CloudVision.Error{}}` for an error *response* (HTTP 4xx/5xx), or
+`{:error, %Googly.CloudVision.Error{}}` for an error _response_ (HTTP 4xx/5xx), or
 `{:error, exception}` (e.g. `%Req.TransportError{}`) for transport-level failures.
 
 ## Docs
 
-* [Upstream API reference](https://cloud.google.com/vision/)
+- [Upstream API reference](https://cloud.google.com/vision/)
