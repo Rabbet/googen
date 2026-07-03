@@ -89,7 +89,7 @@ defmodule Googly.Generator.Endpoint do
       name: name,
       description: method[:description],
       method: method[:httpMethod] |> String.downcase() |> String.to_atom(),
-      path: path,
+      path: host_relative_path(path),
       required_parameters: required,
       optional_parameters: optional,
       path_parameters: Enum.filter(required, &(&1.location == "path")),
@@ -98,6 +98,20 @@ defmodule Googly.Generator.Endpoint do
       return: ret,
       typespec: typespec(name, required, ret)
     }
+  end
+
+  # A discovery-document path (untrusted) must resolve *under* the API's own
+  # host. The generated client builds its request URL as `@base_url |>
+  # URI.merge(path)`, and RFC 3986 reference resolution lets a path that carries
+  # a scheme (`https:...`) or an authority (a leading `//`) REPLACE the base
+  # host — sending the caller's `Authorization: Bearer` token (and, for uploads,
+  # the payload) to an attacker-chosen host. Reduce the path to its host-relative
+  # component so it can only ever address the API's own host. Real Google paths
+  # are already host-relative, so this is a no-op for them (see `URI.parse/1`
+  # keeping `{+name}`/`:verb` templates intact).
+  defp host_relative_path(path) do
+    cleaned = URI.parse(path).path || "/"
+    "/" <> String.trim_leading(cleaned, "/")
   end
 
   defp data_param do
