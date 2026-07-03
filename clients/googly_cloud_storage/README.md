@@ -10,7 +10,7 @@ A modern, self-contained Elixir client for the Google Cloud Storage JSON API, ge
 
 ```elixir
 def deps do
-  [{:googly_cloud_storage, "~> 0.1.1"}]
+  [{:googly_cloud_storage, "~> 0.1.2"}]
 end
 ```
 
@@ -26,9 +26,9 @@ token = Goth.fetch!(MyApp.Goth).token
 ```
 
 Every call returns `{:ok, decoded}` on success. Failures are
-`{:error, %Googly.CloudStorage.Error{}}` for an error *response* (HTTP 4xx/5xx), or
+`{:error, %Googly.CloudStorage.Error{}}` for an error _response_ (HTTP 4xx/5xx), or
 `{:error, exception}` (e.g. `%Req.TransportError{}`) for transport-level failures.
 
 ## Docs
 
-* [Upstream API reference](https://developers.google.com/storage/docs/json_api/)
+- [Upstream API reference](https://developers.google.com/storage/docs/json_api/)
